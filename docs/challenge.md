@@ -235,3 +235,56 @@ Deployed using Google Cloud Run using the interface in the GCP console with the 
   - Max: 8,746ms (likely cold start or model training)
 
 **Analysis**: API handles production load successfully with zero errors. Response times are acceptable for ML inference, with most requests completing under 500ms. The higher max time likely represents initial model loading on cold starts.
+
+## Part IV: CI/CD Implementation
+
+### CI Workflow (`.github/workflows/ci.yml`)
+
+**Purpose**: Run tests on every pull request and push to `main`/`dev` branches.
+
+**Triggers**:
+- Pull requests to any branch
+- Pushes to `main` or `dev` branches
+
+**Steps**:
+1. Checkout code
+2. Setup Python 3.9
+3. Install dependencies (requirements.txt, requirements-dev.txt, requirements-test.txt)
+4. Run pytest with coverage for model and API tests
+
+**Result**: Prevents merging code that fails tests.
+
+### CD Workflow (`.github/workflows/cd.yml`)
+
+**Purpose**: Automatically deploy to GCP Cloud Run when code is merged to `main`.
+
+**Triggers**:
+- Push to `main` branch only (after PR merge)
+
+**Steps**:
+1. Checkout code
+2. Setup GCP authentication using service account key
+3. Configure Docker for Google Container Registry
+4. Build Docker image
+5. Push image to GCR
+6. Deploy to Cloud Run with production configuration
+
+**Configuration**: Uses same Cloud Run settings as manual deployment (2GB memory, 2 CPU, 300s timeout, 10 max instances).
+
+**Required Secrets**:
+- `GCP_SA_KEY`: Service account JSON key with Cloud Run and GCR permissions
+- `GCP_PROJECT_ID`: GCP project ID
+
+### Workflow Strategy
+
+**Branch Protection**: 
+- Work on `dev` branch
+- Create PRs to merge into `main`
+- CI runs on PRs to catch issues before merge
+- CD only deploys from `main` (production branch)
+
+**Benefits**:
+- Automated testing prevents broken code from reaching production
+- Automated deployment reduces manual errors
+- Fast feedback loop for developers
+- Production deployments only from stable `main` branch
