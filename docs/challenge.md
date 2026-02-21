@@ -184,3 +184,54 @@ async def get_health() -> dict:
 - `HTTPException`: Re-raised to preserve status codes
 - `ValueError`: Converted to 400 (validation errors)
 - Other exceptions: Converted to 500 (internal server errors)
+
+## Part III: Cloud Deployment
+
+### Dockerfile Implementation
+
+The Dockerfile containerizes the FastAPI application for deployment:
+
+```dockerfile
+FROM python:3.9-slim          # Base image with Python 3.9
+WORKDIR /app                  # Set working directory
+COPY requirements.txt .        # Copy dependencies file
+RUN pip install -r requirements.txt  # Install Python packages
+COPY challenge/ ./challenge/   # Copy application code
+COPY data/ ./data/            # Copy training data (needed for model)
+EXPOSE 8080                   # Expose port for Cloud Run
+CMD ["uvicorn", "challenge.api:app", "--host", "0.0.0.0", "--port", "8080"]
+```
+
+**Key decisions**:
+- Python 3.9-slim for smaller image size
+- Includes `data/` directory so model can load training data on first request
+- Port 8080 (Cloud Run default)
+- Uvicorn runs the FastAPI app with host 0.0.0.0 to accept external connections
+
+### GCP Cloud Run Deployment
+
+Deployed using Google Cloud Run using the interface in the GCP console with the following configuration:
+
+- Memory: 2GB (required for model loading and training)
+- CPU: 2 cores
+- Timeout: 300 seconds (model trains on first request)
+- Max instances: 10
+- Public access: `--allow-unauthenticated`
+
+**Why Cloud Run**: Serverless platform that automatically scales, handles HTTPS, and charges only for usage.
+
+### Stress Test Report Summary
+
+**Test Configuration**: 100 concurrent users, 60-second duration, using Locust
+
+**Results**:
+- **4,805 total requests** with **0 failures (0.00%)**
+- **Throughput**: 80.94 requests/second
+- **Response times**:
+  - Median: 320ms (50% of requests)
+  - Average: 366ms
+  - 95th percentile: 520ms
+  - 99th percentile: 640ms
+  - Max: 8,746ms (likely cold start or model training)
+
+**Analysis**: API handles production load successfully with zero errors. Response times are acceptable for ML inference, with most requests completing under 500ms. The higher max time likely represents initial model loading on cold starts.
