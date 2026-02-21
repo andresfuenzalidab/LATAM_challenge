@@ -136,3 +136,51 @@ The `predict` method:
 3. **Missing Feature Handling**:
    - Added logic to handle cases where one-hot encoding doesn't produce all expected features
    - Missing features are initialized to 0, ensuring consistent feature space
+
+## Part II: API Implementation
+
+### Framework
+FastAPI (as required by challenge constraints)
+
+### Endpoints
+
+**GET `/health`**: Returns `{"status": "OK"}` for health checks
+```python
+@app.get("/health", status_code=200)
+async def get_health() -> dict:
+    return {"status": "OK"}
+```
+
+**POST `/predict`**: Predicts flight delays
+- **Request**: `{"flights": [{"OPERA": "Aerolineas Argentinas", "TIPOVUELO": "N", "MES": 3}]}`
+- **Response**: `{"predict": [0]}`
+- **Status Codes**: 200 (success), 400 (validation error), 500 (server error)
+
+### Implementation Details
+
+**Model Loading**: 
+- Lazy loading via `get_model()` function (singleton pattern with global `_model` variable)
+- Model loads and trains on first `/predict` request
+
+**Input Validation** (`validate_flight()` function):
+- Manual validation without Pydantic
+- **OPERA**: Must be one of 22 valid airline names in `VALID_OPERAS` list
+- **TIPOVUELO**: Must be "I" (International) or "N" (National)
+- **MES**: Must be integer between 1-12
+- Raises `HTTPException(400)` for invalid data
+
+**Request Processing** (`post_predict()` endpoint):
+1. Parse JSON body using `Request` object with `await req.json()`
+2. Validate request structure (must have "flights" as non-empty list)
+3. Validate each flight using `validate_flight()`
+4. Convert flights to pandas DataFrame
+5. Add dummy `Fecha-I` column (required by preprocess, not used for prediction)
+6. Get model via `get_model()` (loads if not already loaded)
+7. Preprocess using `DelayModel.preprocess()`
+8. Predict using `DelayModel.predict()`
+9. Return `{"predict": predictions}` as JSON
+
+**Error Handling**:
+- `HTTPException`: Re-raised to preserve status codes
+- `ValueError`: Converted to 400 (validation errors)
+- Other exceptions: Converted to 500 (internal server errors)
