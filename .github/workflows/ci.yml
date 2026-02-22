@@ -16,5 +16,4 @@ jobs:
       - run: |
           pip install -r requirements.txt -r requirements-dev.txt -r requirements-test.txt
       - run: |
-          cd tests
-          pytest --cov=challenge model api
+          pytest --cov=challenge tests/model tests/api
