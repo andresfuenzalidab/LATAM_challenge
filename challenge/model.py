@@ -7,9 +7,22 @@ from sklearn.linear_model import LogisticRegression
 class DelayModel:
 
     def __init__(
-        self
+        self,
+        top_features = [
+            "OPERA_Latin American Wings", 
+            "MES_7",
+            "MES_10",
+            "OPERA_Grupo LATAM",
+            "MES_12",
+            "TIPOVUELO_I",
+            "MES_4",
+            "MES_11",
+            "OPERA_Sky Airline",
+            "OPERA_Copa Air"
+        ]
     ):
         self._model = None # Model should be saved in this attribute.
+        self.top_features = top_features # Store passing through an optional argument to avoid hardcoded variable
 
     def _get_period_day(self, date_str: str) -> str:
         # This function should return the period of the day of the flight.
@@ -103,24 +116,11 @@ class DelayModel:
         
         features = pd.concat([opera_dummies, tipovuelo_dummies, mes_dummies], axis=1)
 
-        TOP_FEATURES = [
-            "OPERA_Latin American Wings", 
-            "MES_7",
-            "MES_10",
-            "OPERA_Grupo LATAM",
-            "MES_12",
-            "TIPOVUELO_I",
-            "MES_4",
-            "MES_11",
-            "OPERA_Sky Airline",
-            "OPERA_Copa Air"
-        ]
-
-        for feature in TOP_FEATURES:
+        for feature in self.top_features:
             if feature not in features.columns:
                 features[feature] = 0
 
-        features = features[TOP_FEATURES]
+        features = features[self.top_features]
 
         if target_column is not None:
             if target_column not in data.columns:

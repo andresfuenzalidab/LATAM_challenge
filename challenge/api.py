@@ -22,36 +22,35 @@ def get_model():
         _model.fit(features, target)
     return _model
 
-def validate_flight(flight: Dict[str, Any]) -> None:
+def validate_flight(flight: Dict[str, Any],
+                    valid_operas = [
+                    "Aerolineas Argentinas",
+                    "Aeromexico",
+                    "Air Canada",
+                    "Air France",
+                    "Alitalia",
+                    "American Airlines",
+                    "Austral",
+                    "Avianca",
+                    "British Airways",
+                    "Copa Air",
+                    "Delta Air",
+                    "Gol Trans",
+                    "Grupo LATAM",
+                    "Iberia",
+                    "JetSmart SPA",
+                    "K.L.M.",
+                    "Lacsa",
+                    "Latin American Wings",
+                    "Oceanair Linhas Aereas",
+                    "Qantas Airways",
+                    "Sky Airline",
+                    "United Airlines"
+                    ]) -> None:
     if "OPERA" not in flight or "TIPOVUELO" not in flight or "MES" not in flight:
         raise HTTPException(status_code=400, detail="Missing required fields")
-    
-    VALID_OPERAS = [
-        "Aerolineas Argentinas",
-        "Aeromexico",
-        "Air Canada",
-        "Air France",
-        "Alitalia",
-        "American Airlines",
-        "Austral",
-        "Avianca",
-        "British Airways",
-        "Copa Air",
-        "Delta Air",
-        "Gol Trans",
-        "Grupo LATAM",
-        "Iberia",
-        "JetSmart SPA",
-        "K.L.M.",
-        "Lacsa",
-        "Latin American Wings",
-        "Oceanair Linhas Aereas",
-        "Qantas Airways",
-        "Sky Airline",
-        "United Airlines"
-    ]
 
-    if flight["OPERA"] not in VALID_OPERAS:
+    if flight["OPERA"] not in valid_operas:
         raise HTTPException(status_code=400, detail="Invalid OPERA")
     
     if flight["TIPOVUELO"] not in ["I", "N"]:
