@@ -15,4 +15,6 @@ jobs:
           python-version: '3.9'
       - run: |
           pip install -r requirements.txt -r requirements-dev.txt -r requirements-test.txt
-      - run: pytest --cov=challenge tests/model tests/api
+      - run: |
+          cd tests
+          pytest --cov=challenge model api
